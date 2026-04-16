@@ -23,7 +23,7 @@ app.post("/api/chat", async (req, res) => {
       body: JSON.stringify({
         model: "deepseek/deepseek-chat", // 🔥 buen modelo gratis
         messages: lastMessages,
-        max_tokens: 150
+        max_tokens: 800
       })
     });
 
