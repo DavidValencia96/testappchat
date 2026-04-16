@@ -1,8 +1,13 @@
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -12,33 +17,47 @@ export default function Chat() {
     const newMessages = [...messages, { role: "user", content: input }];
     setMessages(newMessages);
     setInput("");
+    setLoading(true);
 
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ messages: newMessages })
-    });
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ messages: newMessages })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    setMessages([...newMessages, { role: "assistant", content: data.reply }]);
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: data.reply }
+      ]);
+    } catch (err) {
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: "Error al responder" }
+      ]);
+    }
+
+    setLoading(false);
   };
 
-  // Scroll automático
+  // scroll automático
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
-  // Auto resize textarea
+  // auto resize
   const handleInput = (e) => {
     setInput(e.target.value);
     textareaRef.current.style.height = "auto";
-    textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    textareaRef.current.style.height =
+      textareaRef.current.scrollHeight + "px";
   };
 
-  // Enter para enviar
+  // enter para enviar
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -51,11 +70,11 @@ export default function Chat() {
       height: "100vh",
       display: "flex",
       flexDirection: "column",
-      background: "#d4d9e4",
+      background: "#0b0f19",
       color: "white"
     }}>
 
-      {/* Chat */}
+      {/* Mensajes */}
       <div style={{
         flex: 1,
         overflowY: "auto",
@@ -67,29 +86,60 @@ export default function Chat() {
         {messages.map((m, i) => (
           <div key={i} style={{
             display: "flex",
-            justifyContent: m.role === "user" ? "flex-end" : "flex-start"
+            justifyContent: m.role === "user" ? "flex-end" : "flex-start",
+            animation: "fadeIn 0.3s ease"
           }}>
             <div style={{
-              background: m.role === "user" ? "#2563eb" : "#1e293b",
-              padding: "12px 16px",
-              borderRadius: "12px",
-              margin: "6px 0",
+              background: m.role === "user" ? "#2563eb" : "#111827",
+              padding: "14px 18px",
+              borderRadius: "16px",
+              margin: "8px 0",
               maxWidth: "80%",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-              fontSize: "14px",
-              lineHeight: "1.5"
+              boxShadow: "0 2px 10px rgba(0,0,0,0.4)"
             }}>
-              {m.content}
+              <ReactMarkdown
+                components={{
+                  code({ inline, className, children }) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    return !inline && match ? (
+                      <SyntaxHighlighter
+                        style={oneDark}
+                        language={match[1]}
+                        PreTag="div"
+                      >
+                        {String(children).replace(/\n$/, "")}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <code style={{
+                        background: "#1f2937",
+                        padding: "2px 6px",
+                        borderRadius: "6px"
+                      }}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
+                {m.content}
+              </ReactMarkdown>
             </div>
           </div>
         ))}
+
+        {/* typing indicator */}
+        {loading && (
+          <div style={{ opacity: 0.6 }}>
+            🤖 escribiendo...
+          </div>
+        )}
+
         <div ref={chatEndRef} />
       </div>
 
       {/* Input */}
       <div style={{
-        borderTop: "1px solid #333",
+        borderTop: "1px solid #1e293b",
         padding: "15px",
         display: "flex",
         justifyContent: "center"
@@ -98,9 +148,10 @@ export default function Chat() {
           width: "100%",
           maxWidth: "800px",
           display: "flex",
-          background: "#1e293b",
-          borderRadius: "12px",
-          padding: "10px"
+          background: "#111827",
+          borderRadius: "14px",
+          padding: "10px",
+          border: "1px solid #1f2937"
         }}>
           <textarea
             ref={textareaRef}
