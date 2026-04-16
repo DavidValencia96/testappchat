@@ -19,14 +19,20 @@ app.post("/api/chat", async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-5",
-        input: messages
+        model: "gpt-4o-mini",
+        input: messages.map(m => m.content).join("\n")
       })
     });
 
     const data = await response.json();
 
-    const reply = data.output?.[0]?.content?.[0]?.text || "Sin respuesta";
+    console.log("OPENAI RESPONSE:", JSON.stringify(data, null, 2));
+
+    const reply =
+      data.output?.[0]?.content?.find(c => c.type === "output_text")?.text
+      || data.output_text
+      || "Sin respuesta";
+
 
     res.json({ reply });
 
