@@ -51,7 +51,7 @@ export default function Chat() {
       height: "100vh",
       display: "flex",
       flexDirection: "column",
-      background: "#0f172a",
+      background: "#d4d9e4",
       color: "white"
     }}>
 
