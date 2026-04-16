@@ -3,7 +3,8 @@ import { useState, useRef, useEffect } from "react";
 export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const chatRef = useRef(null);
+  const chatEndRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const send = async () => {
     if (!input.trim()) return;
@@ -25,10 +26,17 @@ export default function Chat() {
     setMessages([...newMessages, { role: "assistant", content: data.reply }]);
   };
 
-  // Auto scroll hacia abajo
+  // Scroll automático
   useEffect(() => {
-    chatRef.current?.scrollIntoView({ behavior: "smooth" });
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Auto resize textarea
+  const handleInput = (e) => {
+    setInput(e.target.value);
+    textareaRef.current.style.height = "auto";
+    textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+  };
 
   // Enter para enviar
   const handleKeyDown = (e) => {
@@ -40,73 +48,95 @@ export default function Chat() {
 
   return (
     <div style={{
-      maxWidth: 700,
-      margin: "auto",
       height: "100vh",
       display: "flex",
-      flexDirection: "column"
+      flexDirection: "column",
+      background: "#0f172a",
+      color: "white"
     }}>
 
       {/* Chat */}
       <div style={{
         flex: 1,
         overflowY: "auto",
-        padding: 20
+        padding: "20px",
+        maxWidth: "800px",
+        margin: "auto",
+        width: "100%"
       }}>
         {messages.map((m, i) => (
           <div key={i} style={{
-            background: m.role === "user" ? "#2563eb" : "#1e293b",
-            margin: "10px 0",
-            padding: "12px",
-            borderRadius: "12px",
-            color: "white",
-            whiteSpace: "pre-wrap",     // 👈 mantiene saltos de línea
-            wordBreak: "break-word"     // 👈 evita desbordes
+            display: "flex",
+            justifyContent: m.role === "user" ? "flex-end" : "flex-start"
           }}>
-            {m.content}
+            <div style={{
+              background: m.role === "user" ? "#2563eb" : "#1e293b",
+              padding: "12px 16px",
+              borderRadius: "12px",
+              margin: "6px 0",
+              maxWidth: "80%",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              fontSize: "14px",
+              lineHeight: "1.5"
+            }}>
+              {m.content}
+            </div>
           </div>
         ))}
-        <div ref={chatRef} />
+        <div ref={chatEndRef} />
       </div>
 
-      {/* Input tipo ChatGPT */}
+      {/* Input */}
       <div style={{
-        display: "flex",
-        padding: 10,
         borderTop: "1px solid #333",
-        background: "#0f172a"
+        padding: "15px",
+        display: "flex",
+        justifyContent: "center"
       }}>
-        <textarea
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          rows={1}
-          placeholder="Escribe tu mensaje..."
-          style={{
-            flex: 1,
-            resize: "none",
-            padding: "10px",
-            borderRadius: "10px",
-            border: "none",
-            outline: "none",
-            fontSize: "14px",
-            maxHeight: "150px",
-            overflowY: "auto"
-          }}
-        />
-        <button
-          onClick={send}
-          style={{
-            marginLeft: 10,
-            padding: "10px 15px",
-            borderRadius: "10px",
-            background: "#2563eb",
-            color: "white",
-            border: "none"
-          }}
-        >
-          Enviar
-        </button>
+        <div style={{
+          width: "100%",
+          maxWidth: "800px",
+          display: "flex",
+          background: "#1e293b",
+          borderRadius: "12px",
+          padding: "10px"
+        }}>
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            placeholder="Escribe tu mensaje..."
+            rows={1}
+            style={{
+              flex: 1,
+              resize: "none",
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              color: "white",
+              fontSize: "14px",
+              maxHeight: "200px",
+              overflowY: "auto"
+            }}
+          />
+
+          <button
+            onClick={send}
+            style={{
+              marginLeft: "10px",
+              background: "#2563eb",
+              border: "none",
+              color: "white",
+              padding: "10px 16px",
+              borderRadius: "10px",
+              cursor: "pointer"
+            }}
+          >
+            ➤
+          </button>
+        </div>
       </div>
     </div>
   );
